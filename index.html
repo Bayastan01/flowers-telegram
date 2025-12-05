@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Flower Market - Создать объявление</title>
+    
+    <!-- Leaflet для карт -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding-top: env(safe-area-inset-top, 0);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .form-step {
+            display: none;
+            animation-duration: 0.3s;
+            animation-fill-mode: both;
+        }
+        
+        .form-step.active {
+            display: block;
+            animation-name: fadeInUp;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .step-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        .input-hint {
+            display: block;
+            margin-top: 8px;
+            color: #888;
+            font-size: 13px;
+        }
+        
+        .photo-upload {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+            user-select: none;
+        }
+        
+        .photo-upload:hover, .photo-upload:active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .photo-upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        #photoInput {
+            display: none;
+        }
+        
+        #photoPreview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .photo-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-photo {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s;
+            border: 2px solid white;
+        }
+        
+        .remove-photo:hover {
+            background: rgba(255, 59, 48, 1);
+        }
+        
+        .contact-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 600px) {
+            .contact-options {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .contact-option {
+            padding: 20px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .contact-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .contact-option.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .contact-option i {
+            font-size: 28px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .contact-option p {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .contact-option small {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .phone-input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .country-select {
+            flex: 0 0 150px;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fff;
+        }
+        
+        .country-select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .location-map {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+        
+        .location-map i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        #mapPicker {
+            height: 400px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .address-suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: calc(100% - 32px);
+            margin-top: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .address-suggestion {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .address-suggestion:hover {
+            background: #f5f5f5;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .btn:hover:after, .btn:active:after {
+            opacity: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            background-image: none;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .navigation {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .navigation .btn {
+            flex: 1;
+        }
+        
+        .preview-item {
+            background: rgba(102, 126, 234, 0.05);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .preview-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .preview-value {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .photo-preview {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .photo-more {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .progress-bar:before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255,255,255,0.3);
+            z-index: 1;
+        }
+        
+        .progress-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .step-number.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+        }
+        
+        .step-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            transition: color 0.3s;
+        }
+        
+        .step-label.active {
+            color: white;
+            font-weight: 500;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.4s ease;
+            max-width: 90%;
+            width: 400px;
+        }
+        
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .notification-icon {
+            font-size: 22px;
+            color: #ff3b30;
+        }
+        
+        .notification.success .notification-icon {
+            color: #34c759;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        
+        .notification-message {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            
+            .form-container {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            
+            .step-title {
+                font-size: 18px;
+            }
+            
+            .photo-item {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Стиль для отправки в браузере */
+        .browser-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e9ecef;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .browser-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .telegram-link {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-top: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .telegram-link:hover {
+            background: #0077b5;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-step">
+                <div class="step-number active">1</div>
+                <div class="step-label active">Фото</div>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">2</div>
+                <div class="step-label">Описание</div>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">3</div>
+                <div class="step-label">Цена</div>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">4</div>
+                <div class="step-label">Контакты</div>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">5</div>
+                <div class="step-label">Локация</div>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">6</div>
+                <div class="step-label">Превью</div>
+            </div>
+        </div>
+        
+        <div class="header">
+            <h1><i class="fas fa-flower-tulip"></i> Flower Market</h1>
+            <p>Создайте красивое объявление о продаже цветов</p>
+        </div>
+    </div>
+
+    <div class="notification" id="notification" style="transform: translateX(-50%) translateY(-100px);">
+        <i class="fas fa-exclamation-circle notification-icon" id="notificationIcon"></i>
+        <div class="notification-content">
+            <div class="notification-title" id="notificationTitle">Ошибка</div>
+            <div class="notification-message" id="notificationMessage"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-container">
+            <!-- Шаг 1: Фото -->
+            <div class="form-step active" id="step1">
+                <h2 class="step-title"><i class="fas fa-camera"></i> Загрузите фото</h2>
+                <div class="form-group">
+                    <div class="photo-upload" id="photoUpload" role="button">
+                        <i class="fas fa-cloud-upload-alt photo-upload-icon" id="uploadIcon"></i>
+                        <p id="uploadMainText">Нажмите для загрузки фото</p>
+                        <p class="input-hint" id="uploadHint">Можно загрузить до 10 фото (максимум 5MB каждое)</p>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" multiple>
+                    <div id="photoPreview"></div>
+                </div>
+                <div class="navigation">
+                    <button class="btn" onclick="nextStep()" id="nextBtn1">
+                        Далее <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Шаг 2: Описание -->
+            <div class="form-step" id="step2">
+                <h2 class="step-title"><i class="fas fa-edit"></i> Описание товара</h2>
+                <div class="form-group">
+                    <label for="description">Опишите ваш товар подробно:</label>
+                    <textarea id="description" placeholder="Например: Свежие розы из Эквадора, идеально подходят для свадебных букетов. Доставка по городу."></textarea>
+                    <p class="input-hint">Минимум 10 символов. Рекомендуем указать сорт, состояние, возможность доставки</p>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn" onclick="nextStep()" id="nextBtn2">
+                        Далее <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Шаг 3: Цена -->
+            <div class="form-step" id="step3">
+                <h2 class="step-title"><i class="fas fa-tag"></i> Укажите цену</h2>
+                <div class="form-group">
+                    <label for="price">Цена в сомах:</label>
+                    <input type="text" id="price" placeholder="Например: 1500 или Договорная">
+                    <p class="input-hint">Можно указать диапазон: 1000-1500, или "Договорная"</p>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn" onclick="nextStep()" id="nextBtn3">
+                        Далее <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Шаг 4: Контакты -->
+            <div class="form-step" id="step4">
+                <h2 class="step-title"><i class="fas fa-phone"></i> Контакты для связи</h2>
+                <div class="contact-options">
+                    <div class="contact-option active" id="telegramOption" onclick="selectContactType('telegram')" role="button">
+                        <i class="fab fa-telegram"></i>
+                        <p>Telegram</p>
+                        <small>Использовать мой username</small>
+                    </div>
+                    <div class="contact-option" id="phoneOption" onclick="selectContactType('phone')" role="button">
+                        <i class="fas fa-mobile-alt"></i>
+                        <p>Телефон</p>
+                        <small>Для звонков/SMS</small>
+                    </div>
+                    <div class="contact-option" id="whatsappOption" onclick="selectContactType('whatsapp')" role="button">
+                        <i class="fab fa-whatsapp"></i>
+                        <p>WhatsApp</p>
+                        <small>Для сообщений в WhatsApp</small>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="phoneInputGroup" style="display: none;">
+                    <label for="phone">Введите номер телефона:</label>
+                    <div class="phone-input-wrapper">
+                        <select id="countryCode" class="country-select">
+                            <option value="+996">🇰🇬 +996 (Кыргызстан)</option>
+                            <option value="+7">🇷🇺 +7 (Россия)</option>
+                            <option value="+77">🇰🇿 +77 (Казахстан)</option>
+                            <option value="+998">🇺🇿 +998 (Узбекистан)</option>
+                            <option value="+86">🇨🇳 +86 (Китай)</option>
+                            <option value="+1">🇺🇸 +1 (США)</option>
+                        </select>
+                        <input type="tel" id="phone" placeholder="XXX XXX XXX">
+                    </div>
+                    <p class="input-hint" id="phoneHint">Формат: XXX XXX XXX (без пробелов)</p>
+                </div>
+                
+                <div class="form-group" id="whatsappInputGroup" style="display: none;">
+                    <label for="whatsapp">WhatsApp номер:</label>
+                    <div class="phone-input-wrapper">
+                        <select id="whatsappCountryCode" class="country-select">
+                            <option value="+996">🇰🇬 +996 (Кыргызстан)</option>
+                            <option value="+7">🇷🇺 +7 (Россия)</option>
+                            <option value="+77">🇰🇿 +77 (Казахстан)</option>
+                            <option value="+998">🇺🇿 +998 (Узбекистан)</option>
+                            <option value="+86">🇨🇳 +86 (Китай)</option>
+                            <option value="+1">🇺🇸 +1 (США)</option>
+                        </select>
+                        <input type="tel" id="whatsapp" placeholder="XXX XXX XXX">
+                    </div>
+                    <p class="input-hint">Номер будет использован для связи в WhatsApp</p>
+                </div>
+                
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn" onclick="nextStep()" id="nextBtn4">
+                        Далее <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Шаг 5: Локация -->
+            <div class="form-step" id="step5">
+                <h2 class="step-title"><i class="fas fa-map-marker-alt"></i> Локация</h2>
+                <div class="form-group">
+                    <div class="location-map" id="map" onclick="openMapPicker()">
+                        <i class="fas fa-map"></i>
+                        <p style="margin-top: 10px; font-size: 14px;">Нажмите для выбора на карте</p>
+                    </div>
+                    
+                    <div id="mapPicker" style="display: none;"></div>
+                    
+                    <label for="locationInput">Адрес или район:</label>
+                    <input type="text" id="locationInput" placeholder="Начните вводить адрес...">
+                    <div id="addressSuggestions" class="address-suggestions" style="display: none;"></div>
+                    <p class="input-hint">Начните вводить адрес для подсказок</p>
+                    
+                    <p class="input-hint" style="margin: 15px 0;">Или используйте:</p>
+                    <button class="btn btn-secondary" onclick="getCurrentLocation()" id="locationBtn">
+                        <i class="fas fa-location-crosshairs"></i> Использовать мое местоположение
+                    </button>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn" onclick="nextStep()" id="nextBtn5">
+                        Далее <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Шаг 6: Превью -->
+            <div class="form-step" id="step6">
+                <h2 class="step-title"><i class="fas fa-eye"></i> Превью объявления</h2>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Фото</div>
+                    <div id="previewPhotos" class="photos-grid"></div>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Описание</div>
+                    <div class="preview-value" id="previewDescription"></div>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Цена</div>
+                    <div class="preview-value" id="previewPrice"></div>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Контакты</div>
+                    <div class="preview-value" id="previewContacts"></div>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Локация</div>
+                    <div class="preview-value" id="previewLocation"></div>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-label">Стоимость публикации</div>
+                    <div class="preview-value">50 сом</div>
+                </div>
+                
+                <div id="browserInfo" class="browser-info" style="display: none;">
+                    <h3><i class="fas fa-info-circle"></i> Инструкция для отправки</h3>
+                    <p>Для отправки данных откройте эту форму через Telegram бота:</p>
+                    <a href="https://t.me/FlowerMarket_KG_Bot" target="_blank" class="telegram-link">
+                        <i class="fab fa-telegram"></i> Открыть в Telegram боте
+                    </a>
+                </div>
+                
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                    <button class="btn" onclick="submitForm()" id="submitBtn">
+                        Отправить на проверку <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        // Получаем данные Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        
+        // Инициализируем Web App если доступен
+        if (tg) {
+            tg.expand();
+            tg.enableClosingConfirmation();
+            
+            // Показываем данные пользователя
+            console.log("Telegram Web App данные:", {
+                initData: tg.initData,
+                initDataUnsafe: tg.initDataUnsafe,
+                user: tg.initDataUnsafe?.user
+            });
+        }
+
+        let formData = {
+            photos: [],
+            description: '',
+            price: '',
+            contact_type: 'telegram',
+            contacts: '',
+            location: { type: 'none', address: 'Не указано' }
+        };
+
+        let currentStep = 1;
+        const totalSteps = 6;
+        const MAX_PHOTOS = 10;
+        const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+        const PRICE = 50;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+            setupEventListeners();
+            updateProgressBar();
+            updateUploadBlock();
+            
+            // Показываем информацию если не в Telegram
+            if (!tg) {
+                document.getElementById('browserInfo').style.display = 'block';
+            }
+        });
+
+        function initApp() {
+            if (tg && tg.initDataUnsafe?.user) {
+                const user = tg.initDataUnsafe.user;
+                console.log("Информация о пользователе:", {
+                    id: user.id,
+                    username: user.username,
+                    first_name: user.first_name,
+                    last_name: user.last_name
+                });
+                
+                // Сохраняем данные пользователя
+                formData.user_id = user.id;
+                formData.user_first_name = user.first_name || '';
+                formData.user_last_name = user.last_name || '';
+                formData.user_username = user.username || '';
+                
+                if (user.username) {
+                    formData.contacts = `@${user.username}`;
+                    console.log('Telegram username определен:', user.username);
+                } else {
+                    showNotification('Внимание', 'У вас нет username в Telegram. Пожалуйста, используйте телефон или WhatsApp для связи.', 'warning');
+                    selectContactType('phone');
+                }
+            } else if (tg && tg.initData) {
+                // Пытаемся получить данные из initData
+                try {
+                    const params = new URLSearchParams(tg.initData);
+                    const userParam = params.get('user');
+                    if (userParam) {
+                        const user = JSON.parse(decodeURIComponent(userParam));
+                        formData.user_id = user.id;
+                        formData.user_username = user.username || '';
+                        
+                        if (user.username) {
+                            formData.contacts = `@${user.username}`;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Ошибка парсинга initData:', e);
+                }
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('photoUpload').addEventListener('click', () => {
+                document.getElementById('photoInput').click();
+            });
+
+            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+
+            const descEl = document.getElementById('description');
+            if (descEl) {
+                descEl.addEventListener('input', debounce(() => {
+                    formData.description = descEl.value;
+                }, 500));
+            }
+
+            const priceEl = document.getElementById('price');
+            if (priceEl) {
+                priceEl.addEventListener('input', debounce(() => {
+                    formData.price = priceEl.value;
+                }, 300));
+            }
+
+            const phoneEl = document.getElementById('phone');
+            if (phoneEl) {
+                phoneEl.addEventListener('input', debounce(() => {
+                    if (formData.contact_type === 'phone') {
+                        const countryCode = document.getElementById('countryCode').value;
+                        const phoneNumber = phoneEl.value.replace(/\D/g, '');
+                        formData.contacts = countryCode + phoneNumber;
+                    }
+                }, 300));
+            }
+
+            const whatsappEl = document.getElementById('whatsapp');
+            if (whatsappEl) {
+                whatsappEl.addEventListener('input', debounce(() => {
+                    if (formData.contact_type === 'whatsapp') {
+                        const countryCode = document.getElementById('whatsappCountryCode').value;
+                        const phoneNumber = whatsappEl.value.replace(/\D/g, '');
+                        formData.contacts = countryCode + phoneNumber;
+                    }
+                }, 300));
+            }
+
+            const locEl = document.getElementById('locationInput');
+            if (locEl) {
+                locEl.addEventListener('input', debounce((e) => {
+                    const query = e.target.value.trim();
+                    if (query.length >= 3) {
+                        searchAddress(query);
+                    } else {
+                        hideAddressSuggestions();
+                    }
+                }, 500));
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#addressSuggestions') && !e.target.matches('#locationInput')) {
+                    hideAddressSuggestions();
+                }
+            });
+
+            if (descEl) {
+                descEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && currentStep === 2) {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                });
+            }
+            if (priceEl) {
+                priceEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && currentStep === 3) {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                });
+            }
+            if (phoneEl) {
+                phoneEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && currentStep === 4 && formData.contact_type === 'phone') {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                });
+            }
+            if (whatsappEl) {
+                whatsappEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && currentStep === 4 && formData.contact_type === 'whatsapp') {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                });
+            }
+            if (locEl) {
+                locEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && currentStep === 5) {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                });
+            }
+        }
+
+        function showNotification(title, message, type = 'error') {
+            const notification = document.getElementById('notification');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            const icon = document.getElementById('notificationIcon');
+
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+
+            notification.className = 'notification';
+            if (type === 'success') {
+                notification.classList.add('success');
+                icon.className = 'fas fa-check-circle notification-icon';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle notification-icon';
+            } else if (type === 'info') {
+                icon.className = 'fas fa-info-circle notification-icon';
+            } else {
+                icon.className = 'fas fa-exclamation-circle notification-icon';
+            }
+
+            notification.style.transform = 'translateX(-50%) translateY(0)';
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.style.transform = 'translateX(-50%) translateY(-100px)';
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function handlePhotoUpload(event) {
+            const files = Array.from(event.target.files);
+            const currentCount = formData.photos.length;
+
+            if (currentCount + files.length > MAX_PHOTOS) {
+                showNotification('Ошибка', `Максимальное количество фото: ${MAX_PHOTOS}. У вас уже ${currentCount} фото.`);
+                event.target.value = '';
+                return;
+            }
+
+            files.forEach(file => {
+                if (file.size > MAX_PHOTO_SIZE) {
+                    showNotification('Ошибка', `Фото "${file.name}" слишком большое (${(file.size/1024/1024).toFixed(1)}MB). Максимум 5MB.`);
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    showNotification('Ошибка', `Файл "${file.name}" не является изображением.`);
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    formData.photos.push(e.target.result);
+                    createPhotoPreview(e.target.result, formData.photos.length - 1);
+                    updateUploadBlock();
+                };
+
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        function createPhotoPreview(dataUrl, index) {
+            const preview = document.getElementById('photoPreview');
+
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            photoItem.setAttribute('data-index', index);
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.alt = `Фото ${index + 1}`;
+            img.loading = 'lazy';
+
+            const removeBtn = document.createElement('div');
+            removeBtn.className = 'remove-photo';
+            removeBtn.innerHTML = '×';
+            removeBtn.setAttribute('aria-label', 'Удалить фото');
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                const idx = Number(photoItem.getAttribute('data-index'));
+                const src = img.src;
+                const realIndex = formData.photos.findIndex(p => p === src);
+                if (realIndex !== -1) {
+                    removePhoto(realIndex);
+                } else {
+                    removePhoto(idx);
+                }
+            };
+
+            photoItem.appendChild(img);
+            photoItem.appendChild(removeBtn);
+            preview.appendChild(photoItem);
+        }
+
+        function removePhoto(index) {
+            formData.photos.splice(index, 1);
+            updatePhotoPreview();
+            updateUploadBlock();
+        }
+
+        function updatePhotoPreview() {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = '';
+
+            formData.photos.forEach((photo, index) => {
+                createPhotoPreview(photo, index);
+            });
+        }
+
+        function updateUploadBlock() {
+            const icon = document.getElementById('uploadIcon');
+            const mainText = document.getElementById('uploadMainText');
+            const hint = document.getElementById('uploadHint');
+            const photoCount = formData.photos.length;
+
+            if (photoCount > 0) {
+                icon.className = 'fas fa-check-circle photo-upload-icon';
+                icon.style.color = '#34c759';
+                mainText.textContent = `Загружено фото: ${photoCount}`;
+                hint.textContent = `Можно добавить еще ${MAX_PHOTOS - photoCount} фото`;
+            } else {
+                icon.className = 'fas fa-cloud-upload-alt photo-upload-icon';
+                icon.style.color = '#667eea';
+                mainText.textContent = 'Нажмите для загрузки фото';
+                hint.textContent = `Можно загрузить до ${MAX_PHOTOS} фото (максимум 5MB каждое)`;
+            }
+        }
+
+        function showStep(step) {
+            saveCurrentStepData();
+
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                if (stepElement) {
+                    stepElement.classList.remove('active');
+                }
+            }
+
+            const currentStepElement = document.getElementById(`step${step}`);
+            if (currentStepElement) {
+                currentStepElement.classList.add('active');
+            }
+
+            currentStep = step;
+            updateProgressBar();
+
+            if (step === 6) {
+                updatePreview();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextStep() {
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function saveCurrentStepData() {
+            switch(currentStep) {
+                case 1:
+                    break;
+                case 2:
+                    formData.description = document.getElementById('description').value.trim();
+                    break;
+                case 3:
+                    formData.price = document.getElementById('price').value.trim();
+                    break;
+                case 4:
+                    if (formData.contact_type === 'phone') {
+                        const countryCode = document.getElementById('countryCode').value;
+                        const phoneNumber = document.getElementById('phone').value.replace(/\D/g, '');
+                        formData.contacts = countryCode + phoneNumber;
+                    } else if (formData.contact_type === 'whatsapp') {
+                        const countryCode = document.getElementById('whatsappCountryCode').value;
+                        const phoneNumber = document.getElementById('whatsapp').value.replace(/\D/g, '');
+                        formData.contacts = countryCode + phoneNumber;
+                    }
+                    break;
+                case 5:
+                    const locationInput = document.getElementById('locationInput').value.trim();
+                    if (locationInput) {
+                        formData.location = {
+                            type: 'address',
+                            address: locationInput
+                        };
+                    }
+                    break;
+            }
+        }
+
+        function validateStep(step) {
+            switch(step) {
+                case 1:
+                    if (formData.photos.length === 0) {
+                        showNotification('Ошибка', 'Пожалуйста, загрузите хотя бы одно фото');
+                        return false;
+                    }
+                    break;
+                    
+                case 2:
+                    const description = document.getElementById('description').value.trim();
+                    if (!description) {
+                        showNotification('Ошибка', 'Пожалуйста, напишите описание товара');
+                        return false;
+                    }
+                    if (description.length < 10) {
+                        showNotification('Ошибка', 'Описание должно содержать минимум 10 символов');
+                        return false;
+                    }
+                    formData.description = description;
+                    break;
+                    
+                case 3:
+                    const price = document.getElementById('price').value.trim();
+                    if (!price) {
+                        showNotification('Ошибка', 'Пожалуйста, укажите цену');
+                        return false;
+                    }
+                    formData.price = price;
+                    break;
+                    
+                case 4:
+                    if (formData.contact_type === 'phone' || formData.contact_type === 'whatsapp') {
+                        let phone, phoneRegex;
+                        
+                        if (formData.contact_type === 'phone') {
+                            phone = document.getElementById('phone').value.trim();
+                            phoneRegex = /^\+?\d{9,15}$/;
+                        } else {
+                            phone = document.getElementById('whatsapp').value.trim();
+                            phoneRegex = /^\+?\d{9,15}$/;
+                        }
+                        
+                        if (!phone) {
+                            showNotification('Ошибка', 'Пожалуйста, введите номер телефона');
+                            return false;
+                        }
+                        
+                        const cleanPhone = phone.replace(/\D/g, '');
+                        if (cleanPhone.length < 9 || cleanPhone.length > 15) {
+                            showNotification('Ошибка', 'Номер телефона должен содержать от 9 до 15 цифр');
+                            return false;
+                        }
+                        
+                        formData.contacts = cleanPhone;
+                    } else if (formData.contact_type === 'telegram') {
+                        if (!formData.contacts) {
+                            showNotification('Ошибка', 'У вас нет username в Telegram. Пожалуйста, используйте телефон или WhatsApp');
+                            return false;
+                        }
+                    }
+                    break;
+                    
+                case 5:
+                    const locationInput = document.getElementById('locationInput').value.trim();
+                    if (locationInput) {
+                        formData.location = {
+                            type: 'address',
+                            address: locationInput
+                        };
+                    } else if (!formData.location.address || formData.location.address === 'Не указано') {
+                        formData.location = {
+                            type: 'none',
+                            address: 'Не указано'
+                        };
+                    }
+                    break;
+            }
+            
+            return true;
+        }
+
+        function selectContactType(type) {
+            formData.contact_type = type;
+
+            document.getElementById('telegramOption').classList.remove('active');
+            document.getElementById('phoneOption').classList.remove('active');
+            document.getElementById('whatsappOption').classList.remove('active');
+            document.getElementById(`${type}Option`).classList.add('active');
+
+            const phoneInputGroup = document.getElementById('phoneInputGroup');
+            const whatsappInputGroup = document.getElementById('whatsappInputGroup');
+            const phoneHint = document.getElementById('phoneHint');
+
+            if (type === 'phone') {
+                phoneInputGroup.style.display = 'block';
+                whatsappInputGroup.style.display = 'none';
+                phoneHint.textContent = 'Формат: XXX XXX XXX (без пробелов)';
+            } else if (type === 'whatsapp') {
+                phoneInputGroup.style.display = 'none';
+                whatsappInputGroup.style.display = 'block';
+                phoneHint.textContent = 'Номер будет использован для связи в WhatsApp';
+            } else {
+                phoneInputGroup.style.display = 'none';
+                whatsappInputGroup.style.display = 'none';
+                
+                if (tg && tg.initDataUnsafe?.user) {
+                    const username = tg.initDataUnsafe.user.username;
+                    if (username) {
+                        formData.contacts = `@${username}`;
+                        console.log('Telegram username определен:', username);
+                    } else {
+                        showNotification('Внимание', 'У вас нет username в Telegram. Пожалуйста, используйте телефон или WhatsApp для связи.', 'warning');
+                        selectContactType('phone');
+                    }
+                }
+            }
+        }
+
+        async function getCurrentLocation() {
+            const locationBtn = document.getElementById('locationBtn');
+            const originalText = locationBtn.innerHTML;
+
+            locationBtn.innerHTML = '<div class="loader"></div> Определение...';
+            locationBtn.disabled = true;
+
+            if (!navigator.geolocation) {
+                showNotification('Ошибка', 'Ваш браузер не поддерживает геолокацию');
+                resetLocationButton(locationBtn, originalText);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    formData.location = {
+                        type: 'coordinates',
+                        latitude: lat,
+                        longitude: lng,
+                        address: ''
+                    };
+
+                    try {
+                        const address = await getAddressFromCoords(lat, lng);
+                        if (address) {
+                            formData.location.address = address;
+                            document.getElementById('locationInput').value = address;
+                            locationBtn.innerHTML = '<i class="fas fa-check"></i> Адрес определен';
+                        } else {
+                            locationBtn.innerHTML = '<i class="fas fa-check"></i> Координаты получены';
+                            document.getElementById('locationInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            formData.location.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        }
+                    } catch (error) {
+                        console.error('Error getting address:', error);
+                        locationBtn.innerHTML = '<i class="fas fa-check"></i> Координаты получены';
+                        document.getElementById('locationInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        formData.location.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    }
+
+                    setTimeout(() => {
+                        resetLocationButton(locationBtn, originalText);
+                    }, 2000);
+                },
+                function(error) {
+                    let errorMessage = 'Не удалось получить местоположение';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Вы отказали в доступе к геолокации. Разрешите доступ в настройках браузера.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Информация о местоположении недоступна. Проверьте подключение к интернету.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Время ожидания истекло. Попробуйте еще раз.';
+                            break;
+                    }
+                    showNotification('Ошибка геолокации', errorMessage);
+                    resetLocationButton(locationBtn, originalText);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function resetLocationButton(button, originalText) {
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 1000);
+        }
+
+        async function getAddressFromCoords(lat, lng) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+                    {
+                        headers: {
+                            'Accept-Language': 'ru,en-US;q=0.9,en;q=0.8',
+                            'User-Agent': 'FlowerMarketBot/1.0'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.display_name) {
+                    const addressParts = data.display_name.split(',');
+                    if (addressParts.length > 3) {
+                        return addressParts.slice(0, 3).join(', ');
+                    }
+                    return data.display_name;
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Error fetching address:', error);
+                return null;
+            }
+        }
+
+        async function searchAddress(query) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kg&limit=5`,
+                    {
+                        headers: {
+                            'Accept-Language': 'ru',
+                            'User-Agent': 'FlowerMarketBot/1.0'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                showAddressSuggestions(data);
+            } catch (error) {
+                console.error('Address search error:', error);
+            }
+        }
+
+        function showAddressSuggestions(suggestions) {
+            const container = document.getElementById('addressSuggestions');
+            container.innerHTML = '';
+            container.style.display = 'block';
+            
+            suggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'address-suggestion';
+                div.textContent = suggestion.display_name;
+                div.onclick = () => {
+                    document.getElementById('locationInput').value = suggestion.display_name;
+                    formData.location = {
+                        type: 'address',
+                        address: suggestion.display_name,
+                        lat: suggestion.lat,
+                        lon: suggestion.lon
+                    };
+                    hideAddressSuggestions();
+                };
+                container.appendChild(div);
+            });
+        }
+
+        function hideAddressSuggestions() {
+            document.getElementById('addressSuggestions').style.display = 'none';
+        }
+
+        let map, marker;
+
+        function openMapPicker() {
+            const mapElement = document.getElementById('mapPicker');
+            const mapContainer = document.getElementById('map');
+            
+            mapContainer.style.display = 'none';
+            mapElement.style.display = 'block';
+            
+            map = L.map('mapPicker').setView([42.8746, 74.5698], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    map.setView([lat, lng], 15);
+                    
+                    marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+                    
+                    marker.on('dragend', async function(e) {
+                        const newLat = marker.getLatLng().lat;
+                        const newLng = marker.getLatLng().lng;
+                        
+                        try {
+                            const address = await getAddressFromCoords(newLat, newLng);
+                            document.getElementById('locationInput').value = address || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`;
+                            
+                            formData.location = {
+                                type: 'coordinates',
+                                address: address || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`,
+                                lat: newLat,
+                                lon: newLng
+                            };
+                        } catch (error) {
+                            console.error('Error getting address:', error);
+                        }
+                    });
+                    
+                    try {
+                        const address = await getAddressFromCoords(lat, lng);
+                        document.getElementById('locationInput').value = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        
+                        formData.location = {
+                            type: 'coordinates',
+                            address: address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                            lat: lat,
+                            lon: lng
+                        };
+                    } catch (error) {
+                        console.error('Error getting address:', error);
+                    }
+                }, function(error) {
+                    console.error('Geolocation error:', error);
+                    showNotification('Ошибка', 'Не удалось получить ваше местоположение', 'warning');
+                });
+            }
+            
+            map.on('click', async function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+                }
+                
+                try {
+                    const address = await getAddressFromCoords(lat, lng);
+                    document.getElementById('locationInput').value = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    
+                    formData.location = {
+                        type: 'coordinates',
+                        address: address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        lat: lat,
+                        lon: lng
+                    };
+                } catch (error) {
+                    console.error('Error getting address:', error);
+                }
+            });
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '10px';
+            closeBtn.style.right = '10px';
+            closeBtn.style.zIndex = '1000';
+            closeBtn.innerHTML = '<i class="fas fa-times"></i> Закрыть карту';
+            closeBtn.onclick = function() {
+                mapElement.style.display = 'none';
+                mapContainer.style.display = 'flex';
+                if (map) {
+                    map.remove();
+                    map = null;
+                }
+            };
+            
+            mapElement.appendChild(closeBtn);
+        }
+
+        function updatePreview() {
+            const previewPhotos = document.getElementById('previewPhotos');
+            previewPhotos.innerHTML = '';
+
+            const photosToShow = formData.photos.slice(0, 6);
+
+            photosToShow.forEach((photo, index) => {
+                const img = document.createElement('img');
+                img.className = 'photo-preview';
+                img.src = photo;
+                img.alt = `Фото ${index + 1}`;
+                img.loading = 'lazy';
+                previewPhotos.appendChild(img);
+            });
+
+            if (formData.photos.length > 6) {
+                const moreCount = document.createElement('div');
+                moreCount.className = 'photo-preview photo-more';
+                moreCount.textContent = `+${formData.photos.length - 6}`;
+                previewPhotos.appendChild(moreCount);
+            }
+
+            const previewDescription = document.getElementById('previewDescription');
+            previewDescription.textContent = formData.description || 'Не указано';
+
+            const previewPrice = document.getElementById('previewPrice');
+            previewPrice.textContent = formData.price || 'Не указана';
+
+            const previewContacts = document.getElementById('previewContacts');
+            let contactsText = '';
+            if (formData.contact_type === 'telegram') {
+                contactsText = `Telegram: ${formData.contacts || 'Не указано'}`;
+            } else if (formData.contact_type === 'whatsapp') {
+                contactsText = `WhatsApp: ${formData.contacts || 'Не указано'}`;
+            } else {
+                contactsText = `Телефон: ${formData.contacts || 'Не указано'}`;
+            }
+            previewContacts.textContent = contactsText;
+
+            const previewLocation = document.getElementById('previewLocation');
+            let locationText = '';
+            if (formData.location.type === 'coordinates') {
+                locationText = `📍 Геолокация: ${formData.location.address || 'Координаты получены'}`;
+            } else if (formData.location.type === 'address') {
+                locationText = `📍 Адрес: ${formData.location.address}`;
+            } else {
+                locationText = '📍 Не указана';
+            }
+            previewLocation.textContent = locationText;
+        }
+
+        function updateProgressBar() {
+            const stepNumbers = document.querySelectorAll('.step-number');
+            const stepLabels = document.querySelectorAll('.step-label');
+
+            stepNumbers.forEach((number, index) => {
+                if (index + 1 === currentStep) {
+                    number.classList.add('active');
+                } else {
+                    number.classList.remove('active');
+                }
+            });
+
+            stepLabels.forEach((label, index) => {
+                if (index + 1 <= currentStep) {
+                    label.classList.add('active');
+                } else {
+                    label.classList.remove('active');
+                }
+            });
+        }
+
+        async function submitForm() {
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+
+            submitBtn.innerHTML = '<div class="loader"></div> Отправка...';
+            submitBtn.disabled = true;
+
+            try {
+                if (!formData.description || !formData.price || !formData.contacts) {
+                    throw new Error('Не все обязательные поля заполнены');
+                }
+
+                // Добавляем временную метку
+                const finalData = {
+                    ...formData,
+                    timestamp: new Date().toISOString(),
+                    price_per_post: PRICE
+                };
+
+                // Проверяем, открыто ли в Telegram Web App
+                if (tg && typeof tg.sendData === 'function') {
+                    // Если в Telegram, отправляем через Web App
+                    tg.sendData(JSON.stringify(finalData));
+                    
+                    showNotification('Успешно', 'Объявление отправлено на проверку! После проверки администратором вам придет запрос на оплату.', 'success');
+
+                    // Закрываем Web App через 3 секунды
+                    setTimeout(() => {
+                        if (tg && typeof tg.close === 'function') {
+                            tg.close();
+                        }
+                    }, 3000);
+                    
+                } else {
+                    // Если не в Telegram, показываем инструкцию
+                    showNotification(
+                        'Открыто в браузере', 
+                        'Для автоматической отправки откройте эту форму через Telegram бота @Flowers_kyrgyz_bot',
+                        'info'
+                    );
+                    
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                showNotification('Ошибка отправки', 'Не удалось отправить объявление. Попробуйте еще раз.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Инициализация по умолчанию
+        selectContactType('telegram');
+    </script>
+</body>
+</html>
