@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#667eea" />
+    <title>Flower Market - Создать объявление</title>
+    <style>
+        /* Стили (оставлены ваши, немного упрощены там где нужно) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding-bottom: 20px; 
+        }
+        .header { 
+            text-align: center; 
+            color: white; 
+            margin-bottom: 30px; 
+            padding-top: 20px; 
+        }
+        .header h1 { 
+            font-size: 24px; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+        }
+        .header p { 
+            opacity: 0.9; 
+            font-size: 14px; 
+        }
+        .form-container { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 25px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+            margin-bottom: 20px; 
+        }
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .step-title { font-size: 20px; color: #333; margin-bottom: 18px; text-align: center; font-weight: 600; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 15px; }
+        input, textarea, select, button { font-family: inherit; }
+        input, textarea, select { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; transition: all 0.2s ease; background: #fff; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.06); }
+        textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+        .input-hint { display: block; margin-top: 8px; color: #888; font-size: 13px; }
+        .photo-upload { border: 3px dashed #667eea; border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(102, 126, 234, 0.04); }
+        .photo-upload:hover { background: rgba(102, 126, 234, 0.08); }
+        #photoInput { display: none; }
+        #photoPreview { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .photo-item { position: relative; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; display:block; }
+        .remove-photo { position: absolute; top: 6px; right: 6px; background: rgba(255, 59, 48, 0.95); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; font-weight: bold; border: 2px solid white; }
+        .contact-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .contact-option { padding: 14px 12px; border: 2px solid #e0e0e0; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.18s ease; background: #fff; }
+        .contact-option.active { border-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.16); }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 18px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-secondary { background: #f0f0f0; color: #333; border: none; padding: 10px 14px; border-radius: 12px; cursor: pointer; }
+        .navigation { display: flex; gap: 12px; margin-top: 18px; }
+        .navigation .btn { flex: 1; }
+        .progress-bar { display: flex; justify-content: space-between; margin-bottom: 20px; position: relative; }
+        .progress-bar:before { content: ''; position: absolute; top: 14px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.18); z-index: 1; }
+        .progress-step { position: relative; z-index: 2; text-align: center; flex: 1; }
+        .step-number { width: 34px; height: 34px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; color: white; font-weight: 600; }
+        .step-number.active { background: white; color: #667eea; }
+        .step-label { color: rgba(255,255,255,0.9); font-size: 12px; }
+        .step-label.active { color: white; font-weight: 600; }
+        .notification { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); background: white; padding: 12px 16px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 1200; display: none; }
+        .notification.show { display: block; }
+        .loader { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.25); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-screen { text-align: center; padding: 24px; }
+        .success-icon { font-size: 64px; color: #34c759; margin-bottom: 12px; }
+        .success-title { font-size: 20px; color: #333; margin-bottom: 8px; font-weight: 700; }
+        .video-preview { margin-top: 10px; max-width: 100%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .form-container { padding: 18px; }
+            .step-title { font-size: 18px; }
+            .photo-item { width: 80px; height: 80px; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-step"><div class="step-number active">1</div><div class="step-label active">Фото</div></div>
+            <div class="progress-step"><div class="step-number">2</div><div class="step-label">Описание</div></div>
+            <div class="progress-step"><div class="step-number">3</div><div class="step-label">Цена</div></div>
+            <div class="progress-step"><div class="step-number">4</div><div class="step-label">Контакты</div></div>
+            <div class="progress-step"><div class="step-number">5</div><div class="step-label">Локация</div></div>
+            <div class="progress-step"><div class="step-number">6</div><div class="step-label">Превью</div></div>
+        </div>
+
+        <div class="header">
+            <h1><i class="fas fa-flower-tulip"></i> Flower Market</h1>
+            <p>Создайте красивое объявление о продаже цветов</p>
+        </div>
+
+        <div class="notification" id="notification"></div>
+
+        <div class="form-container" id="formContainer">
+            <!-- Step 1: Photos -->
+            <div class="form-step active" id="step1">
+                <h2 class="step-title"><i class="fas fa-camera"></i> Загрузите фото</h2>
+                <div class="form-group">
+                    <div class="photo-upload" id="photoUpload">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 36px; color:#667eea; margin-bottom:10px;"></i>
+                        <div style="font-weight:600; color:#111827">Нажмите для загрузки фото</div>
+                        <div class="input-hint">Можно загрузить до 10 фото</div>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" multiple>
+                    <div id="photoPreview"></div>
+                </div>
+                <div class="navigation">
+                    <button class="btn" onclick="nextStep()">Далее <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 2: Description -->
+            <div class="form-step" id="step2">
+                <h2 class="step-title"><i class="fas fa-edit"></i> Описание товара</h2>
+                <div class="form-group">
+                    <label for="description">Опишите ваш товар:</label>
+                    <textarea id="description" placeholder="Например: Свежие розы..."></textarea>
+                    <div class="input-hint">Минимум 3 символа</div>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Назад</button>
+                    <button class="btn" onclick="nextStep()">Далее <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 3: Price -->
+            <div class="form-step" id="step3">
+                <h2 class="step-title"><i class="fas fa-tag"></i> Укажите цену</h2>
+                <div class="form-group">
+                    <label for="price">Цена в сомах:</label>
+                    <input type="text" id="price" placeholder="Например: 1500 или Договорная">
+                    <div class="input-hint">Можно указать диапазон: 1000-1500, или "Договорная"</div>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Назад</button>
+                    <button class="btn" onclick="nextStep()">Далее <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 4: Contacts -->
+            <div class="form-step" id="step4">
+                <h2 class="step-title"><i class="fas fa-phone"></i> Контакты для связи</h2>
+                <div class="form-group contact-options">
+                    <div class="contact-option active" id="telegramOption" onclick="selectContactType('telegram')">
+                        <i class="fab fa-telegram"></i>
+                        <div style="margin-top:8px; font-weight:600">Telegram</div>
+                        <div style="font-size:12px; color:#6b7280">Ввести username</div>
+                    </div>
+                    <div class="contact-option" id="phoneOption" onclick="selectContactType('phone')">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div style="margin-top:8px; font-weight:600">Телефон</div>
+                        <div style="font-size:12px; color:#6b7280">Ввести номер</div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="telegramInputGroup">
+                    <label for="telegram">Введите Telegram username:</label>
+                    <input type="text" id="telegram" placeholder="@username">
+                    <div class="input-hint">Например: @username</div>
+                </div>
+
+                <div class="form-group" id="phoneInputGroup" style="display:none;">
+                    <label for="phone">Введите номер телефона:</label>
+                    <input type="tel" id="phone" placeholder="+996 XXX XXX XXX">
+                    <div class="input-hint">Формат: +996XXXXXXXXX</div>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Назад</button>
+                    <button class="btn" onclick="nextStep()">Далее <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 5: Location -->
+            <div class="form-step" id="step5">
+                <h2 class="step-title"><i class="fas fa-map-marker-alt"></i> Локация</h2>
+                <div class="form-group">
+                    <div style="width:100%; height:200px; border-radius:12px; background:#f5f7fa; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#667eea; border:2px solid #e0e0e0; margin-bottom:12px;">
+                        <i class="fas fa-map" style="font-size:42px; margin-bottom:8px;"></i>
+                        <div style="font-weight:600">Ваше местоположение</div>
+                    </div>
+
+                    <label for="locationInput">Адрес или район:</label>
+                    <input type="text" id="locationInput" placeholder="Например: г. Бишкек, ул. Чуй, 123">
+                    <div class="input-hint">Или используйте текущую геолокацию</div>
+
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-secondary" onclick="getCurrentLocation()" id="locationBtn"><i class="fas fa-location-crosshairs"></i> Использовать мое местоположение</button>
+                    </div>
+
+                    <!-- Блок превью локации (шаг 5) -->
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-top: 14px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Локация</div>
+                        <div id="previewLocationStep" style="color:#111827">Не указана</div>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Назад</button>
+                    <button class="btn" onclick="nextStep()">Далее <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 6: Preview + Upload Animation -->
+            <div class="form-step" id="step6">
+                <h2 class="step-title"><i class="fas fa-eye"></i> Превью объявления</h2>
+
+                <div class="form-group">
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Фото</div>
+                        <div id="previewPhotos"></div>
+                    </div>
+
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Описание</div>
+                        <div id="previewDescription">Не указано</div>
+                    </div>
+
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Цена</div>
+                        <div id="previewPrice">Не указана</div>
+                    </div>
+
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Контакты</div>
+                        <div id="previewContacts">Не указано</div>
+                    </div>
+
+                    <div style="background: rgba(102, 126, 234, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#667eea; margin-bottom:8px;">Локация</div>
+                        <div id="previewLocationFinal">Не указана</div>
+                        <div style="margin-top:8px;"><a id="previewMapLink" href="#" target="_blank" style="color:#2563eb; display:none; text-decoration:underline;">Открыть на карте</a></div>
+                    </div>
+
+                    <!-- NEW: загрузка анимации (GIF/MP4/WebM) для публикации в Telegram -->
+                    <div style="background: rgba(240,240,250,0.9); padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="font-weight:600; color:#111827; margin-bottom:8px;">Анимация в публикации (опционально)</div>
+                        <div style="font-size:13px; color:#6b7280; margin-bottom:8px;">Загрузите GIF/MP4/WebM — он будет прикреплён к посту в Telegram.</div>
+                        <input type="file" id="videoInput" accept="video/*,image/gif">
+                        <div id="videoPreviewWrapper"></div>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Назад</button>
+                    <button class="btn" onclick="submitForm()" id="submitBtn">Опубликовать <i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success screen -->
+        <div class="form-container" id="successScreen" style="display:none;">
+            <div class="success-screen">
+                <div class="success-icon">✅</div>
+                <div class="success-title">Объявление успешно опубликовано!</div>
+                <p style="color:#667eea; font-weight:600; margin:12px 0;">
+                    <a id="viewLink" href="#" target="_blank" style="color:#667eea; text-decoration:underline;">Посмотреть в Telegram</a>
+                </p>
+                <button class="btn" onclick="createNewAd()">Создать новое объявление</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== Конфигурация ==========
+        const SERVER_URL = 'https://backend-flower-production.up.railway.app'; // замените при необходимости
+        const MAX_PHOTOS = 10;
+
+        // ========== Состояние формы ==========
+        let formData = {
+            photos: [],
+            description: '',
+            price: '',
+            contact_type: 'telegram',
+            contacts: '',
+            location: { type: 'none', address: 'Не указано', lat: null, lng: null },
+            video: null // { data: base64, filename, type }
+        };
+
+        let currentStep = 1;
+        const totalSteps = 6;
+
+        // Telegram WebApp user
+        let tgUser = null;
+
+        // ========== Init ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            bindUI();
+            initTelegramWebApp();
+            updateProgressBar();
+        });
+
+        function bindUI() {
+            // Photo upload
+            document.getElementById('photoUpload').addEventListener('click', () => document.getElementById('photoInput').click());
+            document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+
+            // Inputs
+            document.getElementById('description').addEventListener('input', (e) => formData.description = e.target.value);
+            document.getElementById('price').addEventListener('input', (e) => formData.price = e.target.value);
+            document.getElementById('telegram').addEventListener('input', (e) => { if (formData.contact_type === 'telegram') formData.contacts = e.target.value; });
+            document.getElementById('phone').addEventListener('input', (e) => { if (formData.contact_type === 'phone') formData.contacts = e.target.value; });
+            document.getElementById('locationInput').addEventListener('input', (e) => {
+                formData.location = { type: 'address', address: e.target.value, lat: null, lng: null };
+                document.getElementById('previewLocationStep').textContent = formData.location.address;
+            });
+
+            // Video upload
+            document.getElementById('videoInput').addEventListener('change', handleVideoUpload);
+        }
+
+        // ========== Telegram WebApp init (username autofill) ==========
+        function initTelegramWebApp() {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const webapp = window.Telegram.WebApp;
+                    if (typeof webapp.expand === 'function') { try { webapp.expand(); } catch(e){} }
+                    const user = webapp.initDataUnsafe && webapp.initDataUnsafe.user;
+                    if (user) {
+                        tgUser = user;
+                        const usernameValue = user.username ? (user.username.startsWith('@') ? user.username : '@' + user.username) : '';
+                        if (usernameValue) {
+                            document.getElementById('telegram').value = usernameValue;
+                            formData.contacts = usernameValue;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Telegram WebApp init error', err);
+            }
+        }
+
+        // ========== Photo handling ==========
+        function handlePhotoUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if ((formData.photos.length + files.length) > MAX_PHOTOS) {
+                showNotification('Ошибка', `Максимум ${MAX_PHOTOS} фото`);
+                event.target.value = '';
+                return;
+            }
+            files.forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    formData.photos.push(e.target.result);
+                    renderPhotoPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        }
+
+        function renderPhotoPreview() {
+            const wrap = document.getElementById('photoPreview');
+            wrap.innerHTML = '';
+            formData.photos.forEach((dataUrl, idx) => {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.alt = `Фото ${idx+1}`;
+                const rem = document.createElement('div');
+                rem.className = 'remove-photo';
+                rem.innerHTML = '×';
+                rem.onclick = (ev) => { ev.stopPropagation(); formData.photos.splice(idx,1); renderPhotoPreview(); };
+                div.appendChild(img);
+                div.appendChild(rem);
+                wrap.appendChild(div);
+            });
+        }
+
+        // ========== Video (animation) handling ==========
+        async function handleVideoUpload(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            // Accept gif/mp4/webm
+            const allowed = ['video/mp4','video/webm','image/gif'];
+            if (!allowed.includes(file.type)) {
+                showNotification('Ошибка', 'Формат не поддерживается. Разрешены MP4, WebM, GIF');
+                e.target.value = '';
+                return;
+            }
+            // Limit size (optional) - e.g. 20 MB
+            const maxBytes = 20 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                showNotification('Ошибка', 'Файл слишком большой (макс 20 MB)');
+                e.target.value = '';
+                return;
+            }
+
+            // Show preview and store base64
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const dataUrl = ev.target.result;
+                formData.video = { data: dataUrl, filename: file.name, type: file.type };
+                renderVideoPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderVideoPreview() {
+            const wrapper = document.getElementById('videoPreviewWrapper');
+            wrapper.innerHTML = '';
+            if (!formData.video) return;
+            // If GIF, show <img>, else use <video>
+            if (formData.video.type === 'image/gif') {
+                const img = document.createElement('img');
+                img.src = formData.video.data;
+                img.alt = 'preview';
+                img.className = 'video-preview';
+                wrapper.appendChild(img);
+            } else {
+                const vid = document.createElement('video');
+                vid.src = formData.video.data;
+                vid.controls = true;
+                vid.className = 'video-preview';
+                wrapper.appendChild(vid);
+            }
+        }
+
+        // ========== Geolocation (step 5) ==========
+        function getCurrentLocation() {
+            const btn = document.getElementById('locationBtn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<span class="loader"></span> Определение...';
+            btn.disabled = true;
+            if (!navigator.geolocation) {
+                showNotification('Ошибка', 'Геолокация не поддерживается');
+                btn.innerHTML = original; btn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                // reverse geocode
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                        headers: { 'User-Agent': 'FlowerMarketWeb/1.0', 'Accept-Language': 'ru' }
+                    });
+                    if (resp.ok) {
+                        const j = await resp.json();
+                        const display = j.display_name ? j.display_name.split(',').slice(0,3).join(', ') : `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        formData.location = { type: 'coordinates', address: display, lat, lng };
+                        document.getElementById('locationInput').value = display;
+                        document.getElementById('previewLocationStep').textContent = display;
+                    } else {
+                        const coordsText = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        formData.location = { type: 'coordinates', address: coordsText, lat, lng };
+                        document.getElementById('locationInput').value = coordsText;
+                        document.getElementById('previewLocationStep').textContent = coordsText;
+                    }
+                } catch (err) {
+                    console.warn('reverse geocode err', err);
+                    const coordsText = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    formData.location = { type: 'coordinates', address: coordsText, lat, lng };
+                    document.getElementById('locationInput').value = coordsText;
+                    document.getElementById('previewLocationStep').textContent = coordsText;
+                } finally {
+                    btn.innerHTML = original; btn.disabled = false;
+                    showNotification('Успешно', 'Местоположение определено', 'success');
+                }
+            }, (err) => {
+                let msg = 'Не удалось определить местоположение';
+                if (err.code === err.PERMISSION_DENIED) msg = 'Разрешите доступ к геолокации';
+                showNotification('Ошибка', msg);
+                btn.innerHTML = original; btn.disabled = false;
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        // ========== Steps navigation & validation ==========
+        function showStep(step) {
+            // save previous step data
+            saveCurrentStepData();
+            for (let i = 1; i <= totalSteps; i++) {
+                document.getElementById('step' + i).classList.remove('active');
+            }
+            document.getElementById('step' + step).classList.add('active');
+            currentStep = step;
+            updateProgressBar();
+            if (step === 6) updatePreview();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveCurrentStepData() {
+            if (currentStep === 2) formData.description = document.getElementById('description').value.trim();
+            if (currentStep === 3) formData.price = document.getElementById('price').value.trim();
+            if (currentStep === 4) {
+                if (formData.contact_type === 'telegram') formData.contacts = document.getElementById('telegram').value.trim();
+                else formData.contacts = document.getElementById('phone').value.trim();
+            }
+            if (currentStep === 5) {
+                const v = document.getElementById('locationInput').value.trim();
+                if (v) {
+                    // preserve lat/lng if already set
+                    formData.location = { type: formData.location.lat && formData.location.lng ? 'coordinates' : 'address', address: v, lat: formData.location.lat || null, lng: formData.location.lng || null };
+                    document.getElementById('previewLocationStep').textContent = v;
+                }
+            }
+        }
+
+        function nextStep() {
+            if (!validateStep(currentStep)) return;
+            if (currentStep < totalSteps) showStep(currentStep + 1);
+        }
+
+        function prevStep() {
+            if (currentStep > 1) showStep(currentStep - 1);
+        }
+
+        function updateProgressBar() {
+            const numbers = document.querySelectorAll('.step-number');
+            const labels = document.querySelectorAll('.step-label');
+            numbers.forEach((n,i) => n.classList.toggle('active', (i+1) === currentStep));
+            labels.forEach((l,i) => l.classList.toggle('active', (i+1) <= currentStep));
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                if (!formData.photos.length) { showNotification('Ошибка', 'Загрузите хотя бы одно фото'); return false; }
+            }
+            if (step === 2) {
+                const v = document.getElementById('description').value.trim();
+                if (!v) { showNotification('Ошибка','Введите описание'); document.getElementById('description').focus(); return false; }
+                if (v.length < 3) { showNotification('Ошибка','Описание слишком короткое'); document.getElementById('description').focus(); return false; }
+            }
+            if (step === 3) {
+                const v = document.getElementById('price').value.trim();
+                if (!v) { showNotification('Ошибка','Введите цену'); document.getElementById('price').focus(); return false; }
+            }
+            if (step === 4) {
+                if (formData.contact_type === 'telegram') {
+                    const v = document.getElementById('telegram').value.trim();
+                    if (!v) { showNotification('Ошибка','Введите Telegram username'); document.getElementById('telegram').focus(); return false; }
+                } else {
+                    const v = document.getElementById('phone').value.trim();
+                    if (!v) { showNotification('Ошибка','Введите номер телефона'); document.getElementById('phone').focus(); return false; }
+                }
+            }
+            return true;
+        }
+
+        function selectContactType(type) {
+            formData.contact_type = type;
+            document.getElementById('telegramOption').classList.toggle('active', type === 'telegram');
+            document.getElementById('phoneOption').classList.toggle('active', type === 'phone');
+            document.getElementById('telegramInputGroup').style.display = type === 'telegram' ? 'block' : 'none';
+            document.getElementById('phoneInputGroup').style.display = type === 'phone' ? 'block' : 'none';
+            if (type === 'telegram' && tgUser && tgUser.username) {
+                const usernameValue = tgUser.username.startsWith('@') ? tgUser.username : '@' + tgUser.username;
+                document.getElementById('telegram').value = usernameValue;
+                formData.contacts = usernameValue;
+            }
+        }
+
+        // ========== Preview update (step 6) ==========
+        function updatePreview() {
+            // photos
+            const pwrap = document.getElementById('previewPhotos');
+            pwrap.innerHTML = '';
+            formData.photos.slice(0,3).forEach((p) => {
+                const img = document.createElement('img');
+                img.src = p;
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.marginRight = '8px';
+                pwrap.appendChild(img);
+            });
+            if (formData.photos.length > 3) {
+                const more = document.createElement('div');
+                more.textContent = `+${formData.photos.length - 3} фото`;
+                more.style.display = 'inline-block';
+                more.style.padding = '8px';
+                more.style.background = '#667eea';
+                more.style.color = '#fff';
+                more.style.borderRadius = '8px';
+                pwrap.appendChild(more);
+            }
+
+            document.getElementById('previewDescription').textContent = formData.description || 'Не указано';
+            document.getElementById('previewPrice').textContent = formData.price || 'Не указана';
+
+            if (formData.contact_type === 'telegram') {
+                document.getElementById('previewContacts').textContent = `Telegram: ${formData.contacts || (tgUser && tgUser.username ? '@' + tgUser.username : 'Не указано')}`;
+            } else {
+                document.getElementById('previewContacts').textContent = `Телефон: ${formData.contacts || 'Не указано'}`;
+            }
+
+            document.getElementById('previewLocationFinal').textContent = formData.location.address || 'Не указана';
+            if (formData.location.lat && formData.location.lng) {
+                const link = `https://www.google.com/maps/search/?api=1&query=${formData.location.lat},${formData.location.lng}`;
+                const anchor = document.getElementById('previewMapLink');
+                anchor.href = link; anchor.style.display = 'inline-block';
+            } else if (formData.location.address) {
+                const q = encodeURIComponent(formData.location.address);
+                const link = `https://www.google.com/maps/search/?api=1&query=${q}`;
+                const anchor = document.getElementById('previewMapLink');
+                anchor.href = link; anchor.style.display = 'inline-block';
+            } else {
+                document.getElementById('previewMapLink').style.display = 'none';
+            }
+
+            // video preview already rendered when uploaded
+        }
+
+        // ========== Submit form to backend ==========
+        async function submitForm() {
+            if (!validateStep(currentStep)) return;
+
+            // Ensure save last step data
+            saveCurrentStepData();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="loader"></span> Публикация...';
+            submitBtn.disabled = true;
+
+            try {
+                // health check
+                try {
+                    const health = await fetch(SERVER_URL + '/health', { method: 'GET', headers: { 'Accept': 'application/json' } });
+                    if (!health.ok) throw new Error('Backend недоступен');
+                } catch (err) {
+                    throw new Error('Нет соединения с сервером');
+                }
+
+                // build final payload
+                const finalData = {
+                    photos: formData.photos,
+                    description: formData.description.trim(),
+                    price: formData.price.trim(),
+                    contact_type: formData.contact_type,
+                    contacts: formData.contacts.trim(),
+                    location: formData.location,
+                    timestamp: new Date().toISOString(),
+                    telegram_user_id: tgUser ? tgUser.id : null,
+                    telegram_username: tgUser && tgUser.username ? tgUser.username : (formData.contact_type === 'telegram' ? (formData.contacts || null) : null),
+                    video: formData.video // may be null
+                };
+
+                const resp = await fetch(SERVER_URL + '/api/create-ad', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalData)
+                });
+
+                const result = await resp.json();
+                if (resp.ok && result.success) {
+                    // show success screen
+                    document.getElementById('formContainer').style.display = 'none';
+                    document.getElementById('successScreen').style.display = 'block';
+                    // optional link to telegram post (depends on bot response)
+                    const viewLink = document.getElementById('viewLink');
+                    // If backend returns message link / message id — you can form a link. Here we'll show group link
+                    viewLink.href = `https://t.me/c/${(result.data.group_id || '').toString().replace('-100','')}/${result.data.message_id || ''}`;
+                    showNotification('Успешно', `Объявление #${result.data.id} опубликовано`, 'success');
+                } else {
+                    throw new Error(result.error || 'Ошибка сервера');
+                }
+            } catch (err) {
+                console.error('Ошибка отправки:', err);
+                showNotification('Ошибка', err.message || 'Не удалось отправить объявление');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // ========== Utilities ==========
+        function showNotification(title, msg, type = 'error') {
+            const n = document.getElementById('notification');
+            n.innerHTML = `<div style="font-weight:700; margin-bottom:6px">${title}</div><div>${msg}</div>`;
+            n.classList.add('show');
+            n.style.borderLeft = type === 'success' ? '6px solid #16a34a' : (type === 'info' ? '6px solid #3b82f6' : '6px solid #ef4444');
+            setTimeout(() => n.classList.remove('show'), 4500);
+        }
+
+        // Reset / new ad
+        function createNewAd() {
+            formData = { photos: [], description: '', price: '', contact_type: 'telegram', contacts: '', location: { type: 'none', address: 'Не указано', lat: null, lng: null }, video: null };
+            document.getElementById('photoPreview').innerHTML = '';
+            document.getElementById('description').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('telegram').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('locationInput').value = '';
+            document.getElementById('previewLocationStep').textContent = '';
+            document.getElementById('videoPreviewWrapper').innerHTML = '';
+            document.getElementById('successScreen').style.display = 'none';
+            document.getElementById('formContainer').style.display = 'block';
+            currentStep = 1; showStep(1);
+        }
+
+        // Initialize default step
+        function showStep(step) {
+            showStep = (function(oldShowStep){
+                return function(step) {
+                    // wrapper to avoid recursion when function redefined
+                    oldShowStep(step);
+                }
+            })(showStep);
+        }
+
+        // Fix for initial navigation functions (we defined showStep earlier; call initial)
+        (function initialize(){
+            // set initial visibility
+            for (let i=1;i<=totalSteps;i++){
+                document.getElementById('step' + i).classList.remove('active');
+            }
+            document.getElementById('step1').classList.add('active');
+        })();
+
+    </script>
+</body>
+</html>
